@@ -111,7 +111,7 @@
   }
   if (gameCanvas) { resizeGame(); addEventListener('resize', resizeGame); }
 
-  const GAME_DUR = 30;
+  const GAME_DUR = 15;
   let gameOn = false, caught = 0, timeLeft = GAME_DUR, gAnimId, gLastT = 0, gSpawn = 0;
   const gPetals = [];
 
@@ -226,9 +226,9 @@
     startBtn.querySelector('span').textContent = 'play again 🌸';
 
     let msg;
-    if (caught >= 40) msg = `${caught} petals! 🌸 a magnificent bouquet!`;
-    else if (caught >= 25) msg = `${caught} petals! ✨ a beautiful garden!`;
-    else if (caught >= 12) msg = `${caught} petals! 🌷 a lovely bunch!`;
+    if (caught >= 20) msg = `${caught} petals! 🌸 a magnificent bouquet!`;
+    else if (caught >= 12) msg = `${caught} petals! ✨ a beautiful garden!`;
+    else if (caught >= 6) msg = `${caught} petals! 🌷 a lovely bunch!`;
     else msg = `${caught} petals! 🌱 a sweet start`;
     resultEl.textContent = msg;
     resultEl.classList.add('show');
