@@ -113,13 +113,35 @@ body {
 }
 @keyframes rise { from { opacity:0; transform: translateY(20px) } to { opacity:1; transform:none } }
 
+/* bouquet game verdict + progress */
+.verdict {
+  font-family: var(--font-script);
+  font-size: clamp(1.7rem, 8.5vw, 2.8rem);
+  line-height: 1.05;
+  color: var(--rose-deep);
+  margin: .2rem 0 0;
+  min-height: 1.2em;
+  opacity: 0; animation: rise 1s 2.6s ease forwards;
+}
+.verdict.pulse { animation: pulse .45s ease; }
+@keyframes pulse { 50% { transform: scale(1.16) rotate(-2deg) } }
+.progress {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: clamp(.8rem, 3.4vw, 1rem);
+  letter-spacing: .04em;
+  color: var(--ink-soft);
+  margin: .1rem 0 0;
+  opacity: 0; animation: rise 1s 2.8s ease forwards;
+}
+
 .scroll-hint {
   display: inline-flex; flex-direction: column; align-items: center; gap: .3rem;
   margin-top: clamp(.4rem, 2vh, 1rem);
   text-decoration: none; color: var(--ink-soft);
   font-family: var(--font-serif); font-style: italic;
   font-size: clamp(1rem, 4vw, 1.2rem);
-  opacity: 0; animation: rise 1s 3s ease forwards;
+  opacity: 0; animation: rise 1s 3.4s ease forwards;
 }
 .scroll-hint svg { animation: bob 1.8s ease-in-out infinite; }
 @keyframes bob { 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(7px) } }
@@ -127,11 +149,11 @@ body {
 /* ---------- BOUQUET ---------- */
 .bouquet { display: grid; place-items: center; margin: clamp(.2rem,1.5vh,.8rem) 0; }
 .bouquet__svg {
-  width: min(400px, 82vw);
+  width: min(500px, 92vw);
   height: auto;
-  max-height: 56svh;
+  max-height: 58svh;
   overflow: visible;
-  filter: drop-shadow(0 26px 34px rgba(180,80,120,.3));
+  filter: drop-shadow(0 28px 38px rgba(180,80,120,.32));
   transform-origin: 50% 90%;
   animation: sway 6s ease-in-out infinite;
 }
@@ -156,89 +178,11 @@ body {
   animation: bloom .8s cubic-bezier(.34,1.56,.64,1) forwards, float 4s ease-in-out infinite;
   animation-delay: calc(1.2s + var(--i) * .11s), calc(2.2s + var(--i) * .11s);
 }
-.blossom:active { animation: wiggle .5s ease; }
 @keyframes bloom { from { opacity:0; transform: scale(0) rotate(-40deg) } to { opacity:1; transform: scale(1) rotate(0) } }
 @keyframes float { 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(-4px) } }
-@keyframes wiggle { 0%,100%{ transform: rotate(0) } 25%{ transform: rotate(-10deg) } 75%{ transform: rotate(10deg) } }
 
-/* ============================================================
-   NOTE CARD
-   ============================================================ */
-.card {
-  position: relative;
-  max-width: 34rem;
-  width: 100%;
-  background: linear-gradient(160deg, rgba(255,255,255,.9), rgba(255,246,239,.85));
-  border: 1px solid rgba(255,255,255,.8);
-  border-radius: 24px;
-  padding: clamp(1.6rem, 7vw, 3rem);
-  box-shadow: 0 30px 60px -30px rgba(180,80,120,.45);
-  backdrop-filter: blur(6px);
-}
-.sticker {
-  position: absolute; top: -18px; left: 50%; transform: translateX(-50%) rotate(-8deg);
-  font-size: 2.2rem; filter: drop-shadow(0 4px 6px rgba(0,0,0,.12));
-  animation: wobble 3s ease-in-out infinite;
-}
-@keyframes wobble { 0%,100%{ transform: translateX(-50%) rotate(-8deg) } 50%{ transform: translateX(-50%) rotate(8deg) } }
-.card .script { text-align: left; }
-.typed {
-  font-family: var(--font-serif);
-  font-size: clamp(1.2rem, 5vw, 1.7rem);
-  line-height: 1.5; text-align: left; color: var(--ink);
-  min-height: 6.2em; margin: .5rem 0 1.2rem;
-}
-.typed::after {
-  content: ''; display: inline-block; width: 2px; height: 1.05em;
-  background: var(--rose); margin-left: 2px; vertical-align: -.15em;
-  animation: caret .8s step-end infinite;
-}
-.typed.done::after { display: none; }
-@keyframes caret { 50% { opacity: 0 } }
-.signoff {
-  font-family: var(--font-script);
-  font-size: clamp(1.3rem, 5.5vw, 1.9rem);
-  color: var(--rose-deep); text-align: right; margin: 0;
-}
-
-/* ============================================================
-   DAISY GAME
-   ============================================================ */
-.daisy-game { display: grid; place-items: center; gap: clamp(1rem, 4vw, 1.6rem); margin-top: 1.4rem; }
-.daisy-game__flower {
-  position: relative;
-  width: clamp(180px, 56vw, 240px);
-  height: clamp(180px, 56vw, 240px);
-  border: none; background: none; cursor: pointer;
-  transition: transform .3s ease;
-  touch-action: manipulation;
-}
-.daisy-game__flower:active { transform: scale(.95) rotate(4deg); }
-.dg-core {
-  position: absolute; inset: 0; margin: auto;
-  width: 34%; height: 34%; border-radius: 50%;
-  background: radial-gradient(circle at 40% 35%, #ffe08a, #e2a12e);
-  box-shadow: inset -6px -8px 14px rgba(150,90,10,.35); z-index: 2;
-}
-.dg-petals i {
-  position: absolute; top: 50%; left: 50%;
-  width: 15%; height: 38%;
-  margin: -38% 0 0 -7.5%;
-  background: linear-gradient(to top, #ffe3ef, #fff);
-  border-radius: 50% 50% 46% 46% / 66% 66% 34% 34%;
-  transform-origin: 50% 100%;
-  transform: rotate(var(--a));
-  box-shadow: inset 0 -6px 10px rgba(239,111,151,.18);
-  transition: transform .5s cubic-bezier(.34,1.56,.64,1), opacity .5s ease;
-}
-.dg-petals i.gone { opacity: 0; transform: rotate(var(--a)) translateY(-70%) scale(.4); }
-.verdict {
-  font-family: var(--font-script);
-  font-size: clamp(1.8rem, 9vw, 3rem);
-  color: var(--rose-deep); margin: 0;
-}
-.verdict.pulse { animation: pulse .4s ease; }
-@keyframes pulse { 50% { transform: scale(1.18) rotate(-2deg) } }
+/* picked flowers keep a soft glow (bounce handled via JS Web Animations) */
+.blossom.picked { filter: drop-shadow(0 0 7px rgba(255,255,255,.9)); }
 
 /* ============================================================
    FINALE

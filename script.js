@@ -1,5 +1,6 @@
 /* ============================================================
    For Jojo 🌸  —  interactions (mobile-first)
+   The game revolves around the bouquet: tap its flowers.
    ============================================================ */
 (() => {
   'use strict';
@@ -7,7 +8,7 @@
   const isSmall = window.matchMedia('(max-width: 640px)').matches;
   const SVGNS = 'http://www.w3.org/2000/svg';
 
-  /* ---------- petal canvas (defined early; used by builders) ---------- */
+  /* ---------- petal canvas ---------- */
   const canvas = document.getElementById('petals');
   const ctx = canvas.getContext('2d');
   function resize() {
@@ -43,16 +44,18 @@
   const AMBIENT = reduceMotion ? 0 : (isSmall ? 26 : Math.min(46, Math.round(innerWidth / 24)));
   for (let i = 0; i < AMBIENT; i++) petals.push(makePetal(Math.random() * innerWidth, Math.random() * innerHeight));
 
+  // a soft, pointed flower petal (not a heart)
   function drawPetal(p) {
     ctx.save();
     ctx.translate(p.x, p.y);
     ctx.rotate(p.rot);
     ctx.fillStyle = p.color;
     ctx.globalAlpha = p.life === Infinity ? 0.85 : Math.min(1, p.life / 60);
+    const s = p.size;
     ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.bezierCurveTo(p.size, -p.size, p.size, p.size, 0, p.size * 1.6);
-    ctx.bezierCurveTo(-p.size, p.size, -p.size, -p.size, 0, 0);
+    ctx.moveTo(0, -s * 1.5);                 // tip
+    ctx.quadraticCurveTo(s, 0, 0, s * 1.5);  // right lobe -> bottom tip
+    ctx.quadraticCurveTo(-s, 0, 0, -s * 1.5);// left lobe -> back to tip
     ctx.fill();
     ctx.restore();
   }
@@ -84,29 +87,30 @@
     if (reduceMotion) return;
     for (let i = 0; i < count; i++) petals.push(makePetal(x, y, true));
   }
-  function floatHeart(x, y) {
-    const h = document.createElement('div');
-    h.textContent = ['💗', '🌸', '🌷', '💛', '🌺'][(Math.random() * 5) | 0];
-    Object.assign(h.style, {
+
+  // floating flower emoji (used for the finale shower — flowers, no hearts)
+  function floatFlower(x, y) {
+    const f = document.createElement('div');
+    f.textContent = ['🌸', '🌷', '🌺', '🌼', '💐'][(Math.random() * 5) | 0];
+    Object.assign(f.style, {
       position: 'fixed', left: x + 'px', top: y + 'px',
-      fontSize: 12 + Math.random() * 14 + 'px',
+      fontSize: 16 + Math.random() * 16 + 'px',
       pointerEvents: 'none', zIndex: 50,
-      transition: 'transform 1.2s ease-out, opacity 1.2s ease-out',
+      transition: 'transform 1.4s ease-out, opacity 1.4s ease-out',
       transform: 'translate(-50%,-50%)', opacity: '1',
     });
-    document.body.appendChild(h);
+    document.body.appendChild(f);
     requestAnimationFrame(() => {
-      h.style.transform = 'translate(-50%,-50%) translateY(-80px) scale(1.4)';
-      h.style.opacity = '0';
+      f.style.transform = 'translate(-50%,-50%) translateY(-90px) rotate(' + (Math.random() * 60 - 30) + 'deg)';
+      f.style.opacity = '0';
     });
-    setTimeout(() => h.remove(), 1300);
+    setTimeout(() => f.remove(), 1500);
   }
 
-  /* tap anywhere -> petals + a heart (ignores buttons/links) */
+  /* tap empty space -> a little puff of petals */
   addEventListener('pointerdown', (e) => {
-    if (e.target.closest('button, a')) return;
-    spawnBurst(e.clientX, e.clientY, isSmall ? 6 : 8);
-    floatHeart(e.clientX, e.clientY);
+    if (e.target.closest('button, a, .blossom')) return;
+    spawnBurst(e.clientX, e.clientY, isSmall ? 5 : 7);
   });
 
   /* ============================================================
@@ -187,11 +191,51 @@
     { x: 200, y: 250, t: 'peony', s: 1.05 },
     { x: 284, y: 250, t: 'peony', s: 1.05 },
   ];
+  const TOTAL = flowers.length;
 
   const stemsG = document.querySelector('.stems');
   const leavesG = document.querySelector('.leaves');
   const blossomsG = document.querySelector('.blossoms');
   const typeIdx = { rose: 0, peony: 0, lily: 0 };
+
+  /* ---- the bouquet game ---- */
+  const verdict = document.getElementById('verdict');
+  const progress = document.getElementById('progress');
+  const PHRASES = [
+    'loves you 🌸', 'loves you a lot', 'loves you more', 'adores you',
+    'can\'t stop 🌷', 'loves you even more', 'you\'re her favourite',
+    'loves you, obviously', 'crazy about you', 'loves you the most 💐',
+    'you again? loves you', 'still loves you', 'loves you endlessly',
+  ];
+  const picked = new Set();
+  let taps = 0;
+
+  function playFlower(bl, idx) {
+    // happy bounce (Web Animations — composes with CSS, leaves opacity alone)
+    if (!reduceMotion && bl.animate) {
+      bl.animate(
+        [
+          { transform: 'scale(1) rotate(0deg)' },
+          { transform: 'scale(1.4) rotate(-12deg)' },
+          { transform: 'scale(1.12) rotate(10deg)' },
+          { transform: 'scale(1) rotate(0deg)' },
+        ],
+        { duration: 550, easing: 'cubic-bezier(.34,1.7,.5,1)' }
+      );
+    }
+    bl.classList.add('picked');
+    const r = bl.getBoundingClientRect();
+    spawnBurst(r.left + r.width / 2, r.top + r.height / 2, 14);
+
+    picked.add(idx);
+    const done = picked.size >= TOTAL;
+    verdict.textContent = done
+      ? 'every flower loves you 🌸'
+      : PHRASES[taps % PHRASES.length];
+    taps++;
+    verdict.classList.remove('pulse'); void verdict.offsetWidth; verdict.classList.add('pulse');
+    progress.textContent = done ? 'all 14 picked — she\'s sure 💐' : `${picked.size} / ${TOTAL} picked`;
+  }
 
   flowers.forEach((f, i) => {
     const c1x = BASE.x + (f.x - BASE.x) * 0.15, c1y = 348;
@@ -207,12 +251,9 @@
     bl.setAttribute('class', 'blossom');
     bl.style.setProperty('--i', i);
     const [c1, c2] = pick(PALETTES[f.t], typeIdx[f.t]++);
-    bl.innerHTML = RENDER[f.t](c1, c2, f.s);
-    bl.addEventListener('pointerdown', (e) => {
-      e.stopPropagation();
-      const r = bl.getBoundingClientRect();
-      spawnBurst(r.left + r.width / 2, r.top + r.height / 2, 14);
-    });
+    // invisible hit-target so taps near the flower always register (mobile-friendly)
+    bl.innerHTML = `<circle r="${30 * f.s}" fill="transparent"/>` + RENDER[f.t](c1, c2, f.s);
+    bl.addEventListener('pointerdown', (e) => { e.stopPropagation(); playFlower(bl, i); });
     pos.appendChild(bl);
     blossomsG.appendChild(pos);
   });
@@ -227,64 +268,16 @@
     leavesG.appendChild(e);
   });
 
-  /* ============================================================
-     Scroll reveal + typewriter
-     ============================================================ */
+  /* ---------- scroll reveal ---------- */
   const io = new IntersectionObserver((entries) => {
     entries.forEach((en) => {
-      if (en.isIntersecting) {
-        en.target.classList.add('in');
-        if (en.target.hasAttribute('data-typed')) startTyping(en.target);
-        io.unobserve(en.target);
-      }
+      if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
     });
   }, { threshold: 0.25 });
-  document.querySelectorAll('.reveal, [data-typed]').forEach((el) => io.observe(el));
-
-  function startTyping(el) {
-    const full = el.textContent;
-    if (reduceMotion) { el.classList.add('done'); return; }
-    el.textContent = '';
-    let i = 0;
-    (function type() {
-      if (i <= full.length) {
-        el.textContent = full.slice(0, i);
-        i++;
-        setTimeout(type, 24 + Math.random() * 38);
-      } else {
-        el.classList.add('done');
-      }
-    })();
-  }
+  document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
 
   /* ============================================================
-     Daisy "loves you" game (rigged 💕)
-     ============================================================ */
-  const pluck = document.getElementById('pluck');
-  const verdict = document.getElementById('verdict');
-  if (pluck) {
-    const dgPetals = [...pluck.querySelectorAll('.dg-petals i')];
-    let idx = 0;
-    pluck.addEventListener('click', () => {
-      if (idx < dgPetals.length) {
-        const p = dgPetals[idx++];
-        p.classList.add('gone');
-        const r = p.getBoundingClientRect();
-        spawnBurst(r.left + r.width / 2, r.top, 5);
-      }
-      const remaining = dgPetals.length - idx;
-      verdict.textContent = remaining <= 0
-        ? 'loves you — every petal 🌼'
-        : (idx % 2 === 1 ? 'loves you' : 'loves you a lot');
-      verdict.classList.remove('pulse'); void verdict.offsetWidth; verdict.classList.add('pulse');
-      if (remaining <= 0) {
-        setTimeout(() => { dgPetals.forEach((p) => p.classList.remove('gone')); idx = 0; verdict.textContent = 'loves you'; }, 2600);
-      }
-    });
-  }
-
-  /* ============================================================
-     Finale — flower rain
+     Finale — flower shower
      ============================================================ */
   const giftBtn = document.getElementById('giftBtn');
   const finaleMsg = document.getElementById('finaleMsg');
@@ -300,7 +293,7 @@
         if (++n > 34) clearInterval(iv);
       }, 60);
       for (let i = 0; i < 22; i++) {
-        setTimeout(() => floatHeart(Math.random() * innerWidth, innerHeight - 40), i * 80);
+        setTimeout(() => floatFlower(Math.random() * innerWidth, innerHeight - 40), i * 80);
       }
       finaleMsg.classList.add('show');
       giftBtn.querySelector('span').textContent = 'they\'re all yours 🌸';
