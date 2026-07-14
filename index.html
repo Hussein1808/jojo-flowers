@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#ffd9e6" />
-  <title>For Jojo 🌸</title>
-  <meta name="description" content="A playful animated bouquet, grown just for Jojo." />
+  <meta name="theme-color" content="#0d0a1a" />
+  <title>For Jojo 🌸 — Night Garden</title>
+  <meta name="description" content="A glowing night garden of animated petals, grown just for Jojo." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,400&family=Dancing+Script:wght@600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -20,7 +20,7 @@
   <!-- ============ 1 · HERO + BOUQUET GAME ============ -->
   <header class="hero section" id="top">
     <div class="glow" aria-hidden="true"></div>
-    <p class="eyebrow">a bouquet, grown just for</p>
+    <p class="eyebrow">a night garden, grown just for</p>
     <h1 class="title">Jojo</h1>
 
     <div class="bouquet" aria-label="An animated flower bouquet of roses, lilies and peonies — tap the flowers to play">
@@ -32,8 +32,8 @@
           <path class="wrap wrap--front" d="M240 400 L192 580 Q240 596 288 580 Z" />
           <path class="tie" d="M200 428 Q240 410 280 428 L274 456 Q240 442 206 456 Z" />
         </g>
-        <g class="stems" fill="none" stroke="#4f8557" stroke-width="4.5" stroke-linecap="round"></g>
-        <g class="leaves" fill="#67a86f"></g>
+        <g class="stems" fill="none" stroke="#3a7d4a" stroke-width="4.5" stroke-linecap="round"></g>
+        <g class="leaves" fill="#4a9e5a"></g>
         <g class="blossoms"></g>
       </svg>
     </div>
@@ -41,13 +41,35 @@
     <p class="verdict" id="verdict">tap a flower to play 🌸</p>
     <p class="progress" id="progress">0 / 14 picked</p>
 
-    <a class="scroll-hint" href="#finale">
-      <span>when you've picked them all 🌷</span>
+    <a class="scroll-hint" href="#game">
+      <span>catch the falling petals 🌷</span>
       <svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 4v14M6 12l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </a>
   </header>
 
-  <!-- ============ 2 · FINALE ============ -->
+  <!-- ============ 2 · PETAL-CATCH GAME ============ -->
+  <section class="section game-section" id="game">
+    <div class="reveal">
+      <h2 class="script">catch the petals</h2>
+      <p class="lede">tap the glowing petals before they float away</p>
+    </div>
+
+    <div class="game-hud">
+      <div class="game-score"><span>score </span><span id="gameScore">0</span></div>
+      <div class="game-timer"><span id="gameTimer">30s</span><span> left</span></div>
+    </div>
+
+    <div class="game-stage" id="gameStage">
+      <canvas class="game-canvas" id="gameCanvas"></canvas>
+    </div>
+
+    <button class="game-start-btn" id="gameStartBtn">
+      <span>start catching 🌸</span>
+    </button>
+    <p class="game-result" id="gameResult"></p>
+  </section>
+
+  <!-- ============ 3 · FINALE ============ -->
   <section class="section finale-section" id="finale">
     <div class="reveal">
       <h2 class="script">ready for all of them?</h2>
@@ -63,7 +85,7 @@
   <!-- ============ FOOTER ============ -->
   <footer class="footer">
     <div class="divider" aria-hidden="true">✿ ❀ ✿ ❀ ✿</div>
-    <blockquote class="quote">“Because you always deserve flowers.”</blockquote>
+    <blockquote class="quote">"Because you always deserve flowers."</blockquote>
     <p class="footer__name">for Jojo, always 🌸</p>
   </footer>
 

@@ -1,6 +1,6 @@
 /* ============================================================
-   For Jojo 🌸  —  interactions (mobile-first)
-   The game revolves around the bouquet: tap its flowers.
+   For Jojo 🌸  —  Night Garden edition
+   Glowing petals · Firefly particles · Petal-catch game
    ============================================================ */
 (() => {
   'use strict';
@@ -8,11 +8,15 @@
   const isSmall = window.matchMedia('(max-width: 640px)').matches;
   const SVGNS = 'http://www.w3.org/2000/svg';
 
-  /* ---------- petal canvas ---------- */
+  /* ==========================================================
+     1 · AMBIENT PETAL CANVAS (background layer)
+     ========================================================== */
   const canvas = document.getElementById('petals');
   const ctx = canvas.getContext('2d');
+  let DPR = 1;
+
   function resize() {
-    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = innerWidth * DPR;
     canvas.height = innerHeight * DPR;
     canvas.style.width = innerWidth + 'px';
@@ -22,49 +26,96 @@
   resize();
   addEventListener('resize', resize);
 
-  const PALETTE = ['#ef6f97', '#ffb38a', '#ffd7e4', '#f4c15b', '#e26aa0', '#ffffff'];
+  /* night-garden palette: glowing pinks, lilacs, warm golds */
+  const PALETTE = [
+    '#ff6b9d', '#e84393', '#a29bfe', '#fd9644',
+    '#55efc4', '#ffeaa7', '#ff9ff3', '#ffffff',
+  ];
+
   const petals = [];
+
   function makePetal(x, y, burst = false) {
-    const size = 6 + Math.random() * 10;
+    const size = burst ? (4 + Math.random() * 8) : (3 + Math.random() * 7);
     return {
       x: x ?? Math.random() * innerWidth,
       y: y ?? -20,
       size,
       color: PALETTE[(Math.random() * PALETTE.length) | 0],
       rot: Math.random() * Math.PI * 2,
-      vr: (Math.random() - 0.5) * 0.06,
-      vx: burst ? (Math.random() - 0.5) * 6 : (Math.random() - 0.5) * 0.8,
-      vy: burst ? -Math.random() * 5 - 1 : 0.6 + Math.random() * 1.2,
+      vr: (Math.random() - 0.5) * 0.05,
+      vx: burst ? (Math.random() - 0.5) * 5 : (Math.random() - 0.5) * 0.6,
+      vy: burst ? -Math.random() * 4 - 1 : 0.4 + Math.random() * 0.9,
       sway: Math.random() * Math.PI * 2,
-      swaySpeed: 0.01 + Math.random() * 0.02,
-      life: burst ? 120 : Infinity,
-      gravity: burst ? 0.12 : 0,
+      swaySpeed: 0.008 + Math.random() * 0.018,
+      life: burst ? 100 : Infinity,
+      gravity: burst ? 0.1 : 0,
+      glowSize: 0.6 + Math.random() * 0.8,
     };
   }
-  const AMBIENT = reduceMotion ? 0 : (isSmall ? 26 : Math.min(46, Math.round(innerWidth / 24)));
-  for (let i = 0; i < AMBIENT; i++) petals.push(makePetal(Math.random() * innerWidth, Math.random() * innerHeight));
 
-  // a soft, pointed flower petal (not a heart)
+  /* seed ambient petals */
+  const AMBIENT = reduceMotion ? 0 : (isSmall ? 20 : Math.min(40, Math.round(innerWidth / 28)));
+  for (let i = 0; i < AMBIENT; i++) {
+    petals.push(makePetal(Math.random() * innerWidth, Math.random() * innerHeight));
+  }
+
+  /* draw a soft, glowing petal shape */
   function drawPetal(p) {
     ctx.save();
     ctx.translate(p.x, p.y);
     ctx.rotate(p.rot);
-    ctx.fillStyle = p.color;
-    ctx.globalAlpha = p.life === Infinity ? 0.85 : Math.min(1, p.life / 60);
+
+    const alpha = p.life === Infinity ? 0.75 : Math.min(0.9, p.life / 50);
     const s = p.size;
+
+    /* outer glow */
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = s * p.glowSize * 3;
+
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = alpha * 0.4;
     ctx.beginPath();
-    ctx.moveTo(0, -s * 1.5);                 // tip
-    ctx.quadraticCurveTo(s, 0, 0, s * 1.5);  // right lobe -> bottom tip
-    ctx.quadraticCurveTo(-s, 0, 0, -s * 1.5);// left lobe -> back to tip
+    ctx.moveTo(0, -s * 1.8);
+    ctx.quadraticCurveTo(s * 1.2, 0, 0, s * 1.8);
+    ctx.quadraticCurveTo(-s * 1.2, 0, 0, -s * 1.8);
     ctx.fill();
+
+    /* bright core */
+    ctx.shadowBlur = s * p.glowSize * 1.5;
+    ctx.globalAlpha = alpha * 0.85;
+    ctx.beginPath();
+    ctx.moveTo(0, -s * 1.4);
+    ctx.quadraticCurveTo(s * 0.8, 0, 0, s * 1.4);
+    ctx.quadraticCurveTo(-s * 0.8, 0, 0, -s * 1.4);
+    ctx.fill();
+
     ctx.restore();
   }
-  function tick() {
+
+  /* main ambient animation loop — runs at ~60fps via rAF */
+  let lastAmbientTime = 0;
+  let ambientSpawnAccum = 0;
+  const AMBIENT_SPAWN_RATE = 0.8; // petals per second (gentle rain)
+
+  function tick(now) {
+    const dt = lastAmbientTime ? (now - lastAmbientTime) : 16;
+    lastAmbientTime = now;
+
     ctx.clearRect(0, 0, innerWidth, innerHeight);
+
+    /* spawn new ambient petals to keep the count up */
+    ambientSpawnAccum += (dt / 1000) * AMBIENT_SPAWN_RATE;
+    while (ambientSpawnAccum >= 1) {
+      ambientSpawnAccum -= 1;
+      if (petals.length < AMBIENT + 10) {
+        petals.push(makePetal(Math.random() * innerWidth, -20));
+      }
+    }
+
     for (let i = petals.length - 1; i >= 0; i--) {
       const p = petals[i];
       p.sway += p.swaySpeed;
-      p.x += p.vx + Math.sin(p.sway) * 0.6;
+      p.x += p.vx + Math.sin(p.sway) * 0.5;
       p.y += p.vy;
       p.vy += p.gravity;
       p.rot += p.vr;
@@ -81,14 +132,14 @@
     }
     requestAnimationFrame(tick);
   }
-  if (!reduceMotion) tick();
+  if (!reduceMotion) requestAnimationFrame(tick);
 
   function spawnBurst(x, y, count = 12) {
     if (reduceMotion) return;
     for (let i = 0; i < count; i++) petals.push(makePetal(x, y, true));
   }
 
-  // floating flower emoji (used for the finale shower — flowers, no hearts)
+  /* floating flower emoji */
   function floatFlower(x, y) {
     const f = document.createElement('div');
     f.textContent = ['🌸', '🌷', '🌺', '🌼', '💐'][(Math.random() * 5) | 0];
@@ -109,20 +160,20 @@
 
   /* tap empty space -> a little puff of petals */
   addEventListener('pointerdown', (e) => {
-    if (e.target.closest('button, a, .blossom')) return;
+    if (e.target.closest('button, a, .blossom, .game-stage')) return;
     spawnBurst(e.clientX, e.clientY, isSmall ? 5 : 7);
   });
 
-  /* ============================================================
-     Build the bouquet: roses, lilies, peonies
-     ============================================================ */
+  /* ==========================================================
+     2 · BOUQUET — roses, lilies, peonies (tap-to-pick game)
+     ========================================================== */
   const PALETTES = {
-    rose:  [['#ef6f97', '#c93c68'], ['#ff8fab', '#d94e7c'], ['#ffb38a', '#e8874a'],
-            ['#f6c1d6', '#e07ba3'], ['#e24b74', '#a83057']],
-    peony: [['#ffd0de', '#ff9bbd'], ['#ffb8cf', '#f26fa0'], ['#ffc9b0', '#ff9273'],
-            ['#ffdce8', '#ff9fc6'], ['#ff9db8', '#e35e88']],
-    lily:  [['#ffffff', '#ffc2d6'], ['#fff2f7', '#ffaecb'], ['#ffe9d6', '#ffb98f'],
-            ['#f9e9ff', '#e2b6f0']],
+    rose:  [['#ff6b9d', '#e84393'], ['#ff9ff3', '#e84393'], ['#fd9644', '#e17055'],
+            ['#ff6b9d', '#c44569'], ['#e84393', '#a83279']],
+    peony: [['#ff9ff3', '#e84393'], ['#ff6b9d', '#c44569'], ['#fd9644', '#e17055'],
+            ['#a29bfe', '#6c5ce7'], ['#ff9ff3', '#e84393']],
+    lily:  [['#ffffff', '#ff9ff3'], ['#dfe6e9', '#a29bfe'], ['#ffeaa7', '#fd9644'],
+            ['#dfe6e9', '#b2bec3']],
   };
   const pick = (arr, i) => arr[i % arr.length];
 
@@ -154,7 +205,7 @@
       }
     });
     out += `<circle r="${6 * s}" fill="${c2}"/>`;
-    out += `<circle r="${2.4 * s}" fill="#ffe9a8"/>`;
+    out += `<circle r="${2.4 * s}" fill="#ffeaa7"/>`;
     return out;
   }
   function lily(c1, c2, s) {
@@ -169,7 +220,7 @@
       out += `<line x1="0" y1="0" x2="0" y2="${-14 * s}" stroke="#e5a93c" stroke-width="${1.5 * s}" transform="rotate(${a})"/>`;
       out += `<circle cx="0" cy="${-14 * s}" r="${2.2 * s}" fill="#c8791f" transform="rotate(${a})"/>`;
     }
-    out += `<circle r="${3.2 * s}" fill="#f6d98a"/>`;
+    out += `<circle r="${3.2 * s}" fill="#ffeaa7"/>`;
     return out;
   }
   const RENDER = { rose, peony, lily };
@@ -198,7 +249,7 @@
   const blossomsG = document.querySelector('.blossoms');
   const typeIdx = { rose: 0, peony: 0, lily: 0 };
 
-  /* ---- the bouquet game ---- */
+  /* ---- the bouquet game (tap to pick) ---- */
   const verdict = document.getElementById('verdict');
   const progress = document.getElementById('progress');
   const PHRASES = [
@@ -211,7 +262,6 @@
   let taps = 0;
 
   function playFlower(bl, idx) {
-    // happy bounce (Web Animations — composes with CSS, leaves opacity alone)
     if (!reduceMotion && bl.animate) {
       bl.animate(
         [
@@ -251,7 +301,6 @@
     bl.setAttribute('class', 'blossom');
     bl.style.setProperty('--i', i);
     const [c1, c2] = pick(PALETTES[f.t], typeIdx[f.t]++);
-    // invisible hit-target so taps near the flower always register (mobile-friendly)
     bl.innerHTML = `<circle r="${30 * f.s}" fill="transparent"/>` + RENDER[f.t](c1, c2, f.s);
     bl.addEventListener('pointerdown', (e) => { e.stopPropagation(); playFlower(bl, i); });
     pos.appendChild(bl);
@@ -276,9 +325,287 @@
   }, { threshold: 0.25 });
   document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
 
-  /* ============================================================
-     Finale — flower shower
-     ============================================================ */
+  /* ==========================================================
+     3 · PETAL-CATCH GAME — "Catch the Falling Petals"
+     ========================================================== */
+  const gameStage    = document.getElementById('gameStage');
+  const gameCanvas   = document.getElementById('gameCanvas');
+  const startBtn     = document.getElementById('gameStartBtn');
+  const scoreEl      = document.getElementById('gameScore');
+  const timerEl      = document.getElementById('gameTimer');
+  const resultEl     = document.getElementById('gameResult');
+
+  if (gameCanvas && !reduceMotion) {
+    const gctx = gameCanvas.getContext('2d');
+    let gW, gH, gDPR;
+
+    function resizeGame() {
+      gDPR = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = gameStage.getBoundingClientRect();
+      gW = rect.width;
+      gH = rect.height;
+      gameCanvas.width = gW * gDPR;
+      gameCanvas.height = gH * gDPR;
+      gctx.setTransform(gDPR, 0, 0, gDPR, 0, 0);
+    }
+    resizeGame();
+    addEventListener('resize', resizeGame);
+
+    /* game state */
+    const GAME_DURATION = 30; // seconds
+    let gameRunning = false;
+    let gameScore = 0;
+    let gameTimeLeft = GAME_DURATION;
+    let gameAnimId = null;
+    let lastGameTime = 0;
+    let spawnAccum = 0;
+
+    /* game petal pool */
+    const gamePetals = [];
+    const GAME_COLORS = [
+      { color: '#ff6b9d', points: 1, name: 'pink' },
+      { color: '#ffeaa7', points: 2, name: 'gold' },
+      { color: '#55efc4', points: 3, name: 'mint' },
+      { color: '#a29bfe', points: 2, name: 'lilac' },
+      { color: '#ff9ff3', points: 1, name: 'magenta' },
+      { color: '#ffffff', points: 5, name: 'white' },  // rare!
+    ];
+
+    function makeGamePetal() {
+      const colorData = GAME_COLORS[(Math.random() * GAME_COLORS.length) | 0];
+      /* rare white petals are less common */
+      const finalColor = (colorData.name === 'white' && Math.random() > 0.12)
+        ? GAME_COLORS[0] : colorData;
+
+      const size = 8 + Math.random() * 12;
+      return {
+        x: 20 + Math.random() * (gW - 40),
+        y: -size * 2,
+        size,
+        color: finalColor.color,
+        points: finalColor.points,
+        rot: Math.random() * Math.PI * 2,
+        vr: (Math.random() - 0.5) * 0.04,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: 0.8 + Math.random() * 1.5,
+        sway: Math.random() * Math.PI * 2,
+        swaySpeed: 0.01 + Math.random() * 0.02,
+        caught: false,
+        catchAnim: 0,
+        glowSize: 0.8 + Math.random() * 0.6,
+      };
+    }
+
+    /* draw glowing game petal */
+    function drawGamePetal(p) {
+      gctx.save();
+      gctx.translate(p.x, p.y);
+      gctx.rotate(p.rot);
+
+      if (p.caught) {
+        /* catch animation: scale up + fade out */
+        const t = p.catchAnim / 20;
+        const scale = 1 + t * 1.5;
+        const alpha = 1 - t;
+        gctx.scale(scale, scale);
+        gctx.globalAlpha = alpha;
+      }
+
+      const s = p.size;
+
+      /* outer glow */
+      gctx.shadowColor = p.color;
+      gctx.shadowBlur = s * p.glowSize * 4;
+      gctx.fillStyle = p.color;
+      gctx.globalAlpha = (p.caught ? gctx.globalAlpha : 1) * 0.35;
+      gctx.beginPath();
+      gctx.moveTo(0, -s * 1.8);
+      gctx.quadraticCurveTo(s * 1.3, 0, 0, s * 1.8);
+      gctx.quadraticCurveTo(-s * 1.3, 0, 0, -s * 1.8);
+      gctx.fill();
+
+      /* bright core */
+      gctx.shadowBlur = s * p.glowSize * 2;
+      gctx.globalAlpha = (p.caught ? gctx.globalAlpha * 2 : 1) * 0.9;
+      gctx.beginPath();
+      gctx.moveTo(0, -s * 1.4);
+      gctx.quadraticCurveTo(s, 0, 0, s * 1.4);
+      gctx.quadraticCurveTo(-s, 0, 0, -s * 1.4);
+      gctx.fill();
+
+      gctx.restore();
+    }
+
+    /* floating score indicator */
+    function showScorePopup(x, y, pts) {
+      gctx.save();
+      gctx.font = `bold ${16 + pts * 2}px 'Quicksand', sans-serif`;
+      gctx.fillStyle = pts >= 3 ? '#55efc4' : (pts >= 2 ? '#ffeaa7' : '#ff6b9d');
+      gctx.shadowColor = gctx.fillStyle;
+      gctx.shadowBlur = 12;
+      gctx.textAlign = 'center';
+      gctx.globalAlpha = 0.9;
+      gctx.fillText(`+${pts}`, x, y);
+      gctx.restore();
+    }
+
+    /* check if a point is inside a petal's hit area */
+    function hitTest(px, py, p) {
+      const dx = px - p.x;
+      const dy = py - p.y;
+      const hitR = p.size * 2.2; // generous hit area for mobile
+      return (dx * dx + dy * dy) < (hitR * hitR);
+    }
+
+    /* handle taps/clicks in game stage */
+    gameStage.addEventListener('pointerdown', (e) => {
+      if (!gameRunning) return;
+      const rect = gameStage.getBoundingClientRect();
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+
+      /* check petals in reverse (top-most first) */
+      for (let i = gamePetals.length - 1; i >= 0; i--) {
+        const p = gamePetals[i];
+        if (!p.caught && hitTest(px, py, p)) {
+          p.caught = true;
+          p.catchAnim = 0;
+          gameScore += p.points;
+          scoreEl.textContent = gameScore;
+
+          /* burst petals from catch point into the ambient canvas */
+          const stageRect = gameStage.getBoundingClientRect();
+          spawnBurst(stageRect.left + p.x, stageRect.top + p.y, 6);
+          break; // one catch per tap
+        }
+      }
+    });
+
+    /* game tick — spawns, physics, rendering */
+    const SPAWN_RATE_BASE = 2.5;  // petals per second at start
+    const SPAWN_RATE_MAX = 6;     // petals per second at end
+    const FALL_SPEED_BASE = 1.0;
+    const FALL_SPEED_MAX = 2.2;
+
+    function gameLoop(now) {
+      if (!gameRunning) return;
+      const dt = lastGameTime ? Math.min(now - lastGameTime, 50) : 16; // cap dt at 50ms
+      lastGameTime = now;
+
+      /* update timer */
+      gameTimeLeft -= dt / 1000;
+      if (gameTimeLeft <= 0) {
+        endGame();
+        return;
+      }
+      timerEl.textContent = Math.ceil(gameTimeLeft) + 's';
+
+      /* difficulty ramp */
+      const progress = 1 - (gameTimeLeft / GAME_DURATION);
+      const spawnRate = SPAWN_RATE_BASE + (SPAWN_RATE_MAX - SPAWN_RATE_BASE) * progress;
+      const speedMult = FALL_SPEED_BASE + (FALL_SPEED_MAX - FALL_SPEED_BASE) * progress;
+
+      /* spawn petals — accumulator-based for frame-rate independence */
+      spawnAccum += (dt / 1000) * spawnRate;
+      while (spawnAccum >= 1) {
+        spawnAccum -= 1;
+        const p = makeGamePetal();
+        p.vy *= speedMult;
+        gamePetals.push(p);
+      }
+
+      /* clear */
+      gctx.clearRect(0, 0, gW, gH);
+
+      /* update & draw petals */
+      for (let i = gamePetals.length - 1; i >= 0; i--) {
+        const p = gamePetals[i];
+
+        if (p.caught) {
+          p.catchAnim++;
+          if (p.catchAnim > 20) {
+            gamePetals.splice(i, 1);
+            continue;
+          }
+        } else {
+          p.sway += p.swaySpeed;
+          p.x += p.vx + Math.sin(p.sway) * 0.5;
+          p.y += p.vy;
+          p.rot += p.vr;
+
+          /* remove if off screen */
+          if (p.y > gH + p.size * 2) {
+            gamePetals.splice(i, 1);
+            continue;
+          }
+        }
+
+        drawGamePetal(p);
+
+        /* show score popup for recently caught petals */
+        if (p.caught && p.catchAnim < 15) {
+          showScorePopup(p.x, p.y - p.size - 10 - p.catchAnim * 2, p.points);
+        }
+      }
+
+      gameAnimId = requestAnimationFrame(gameLoop);
+    }
+
+    function startGame() {
+      gameScore = 0;
+      gameTimeLeft = GAME_DURATION;
+      gamePetals.length = 0;
+      spawnAccum = 0;
+      lastGameTime = 0;
+      gameRunning = true;
+      scoreEl.textContent = '0';
+      timerEl.textContent = GAME_DURATION + 's';
+      resultEl.classList.remove('show');
+      resultEl.textContent = '';
+      startBtn.disabled = true;
+      startBtn.querySelector('span').textContent = 'catching...';
+      resizeGame();
+      gameAnimId = requestAnimationFrame(gameLoop);
+    }
+
+    function endGame() {
+      gameRunning = false;
+      if (gameAnimId) cancelAnimationFrame(gameAnimId);
+
+      /* final clear with a fade */
+      gctx.clearRect(0, 0, gW, gH);
+
+      startBtn.disabled = false;
+      startBtn.querySelector('span').textContent = 'play again 🌸';
+
+      /* show result */
+      let msg;
+      if (gameScore >= 80)      msg = `${gameScore} petals! 🌸 a night garden master!`;
+      else if (gameScore >= 50) msg = `${gameScore} petals! ✨ beautifully done!`;
+      else if (gameScore >= 25) msg = `${gameScore} petals! 🌷 lovely catch!`;
+      else                      msg = `${gameScore} petals! 🌱 try again?`;
+      resultEl.textContent = msg;
+      resultEl.classList.add('show');
+
+      /* celebration burst */
+      const stageRect = gameStage.getBoundingClientRect();
+      for (let i = 0; i < 20; i++) {
+        setTimeout(() => {
+          spawnBurst(
+            stageRect.left + Math.random() * stageRect.width,
+            stageRect.top + Math.random() * stageRect.height * 0.5,
+            4
+          );
+        }, i * 60);
+      }
+    }
+
+    startBtn.addEventListener('click', startGame);
+  }
+
+  /* ==========================================================
+     4 · FINALE — flower shower
+     ========================================================== */
   const giftBtn = document.getElementById('giftBtn');
   const finaleMsg = document.getElementById('finaleMsg');
   if (giftBtn) {
@@ -300,30 +627,30 @@
     });
   }
 
-  /* ============================================================
-     Gentle ambient chimes (off by default)
-     ============================================================ */
+  /* ==========================================================
+     5 · AMBIENT CHIMES (off by default)
+     ========================================================== */
   const muteBtn = document.getElementById('muteBtn');
   let audioCtx = null, playing = false, master = null;
   function startAmbient() {
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    const notes = [523.25, 587.33, 659.25, 783.99];
+    const notes = [261.63, 329.63, 392.00, 523.25, 659.25]; // C4, E4, G4, C5, E5 — pentatonic
     master = audioCtx.createGain();
     master.gain.value = 0;
     master.connect(audioCtx.destination);
-    master.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 2);
+    master.gain.linearRampToValueAtTime(0.04, audioCtx.currentTime + 2);
     (function chime() {
       if (!playing) return;
       const osc = audioCtx.createOscillator();
       const g = audioCtx.createGain();
       osc.type = 'sine';
-      osc.frequency.value = notes[(Math.random() * notes.length) | 0] * (Math.random() < 0.5 ? 1 : 2);
+      osc.frequency.value = notes[(Math.random() * notes.length) | 0] * (Math.random() < 0.3 ? 2 : 1);
       g.gain.setValueAtTime(0, audioCtx.currentTime);
-      g.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05);
-      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 2.2);
+      g.gain.linearRampToValueAtTime(0.4, audioCtx.currentTime + 0.06);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 3);
       osc.connect(g); g.connect(master);
-      osc.start(); osc.stop(audioCtx.currentTime + 2.3);
-      setTimeout(chime, 900 + Math.random() * 1600);
+      osc.start(); osc.stop(audioCtx.currentTime + 3.2);
+      setTimeout(chime, 1200 + Math.random() * 2400);
     })();
   }
   if (muteBtn) muteBtn.addEventListener('click', () => {
