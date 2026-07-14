@@ -20,47 +20,21 @@
     <p class="eyebrow">a bouquet, grown just for</p>
     <h1 class="title">Jojo</h1>
 
-    <!-- ============ ANIMATED BOUQUET ============ -->
-    <div class="bouquet" aria-label="An animated flower bouquet">
-      <svg viewBox="0 0 420 520" class="bouquet__svg" role="img">
+    <!-- ============ ANIMATED BOUQUET (built by script.js) ============ -->
+    <div class="bouquet" aria-label="An animated flower bouquet of roses, lilies and peonies">
+      <svg viewBox="0 0 480 600" class="bouquet__svg" role="img">
         <!-- paper wrap -->
         <g class="wrap-group">
-          <path class="wrap wrap--back" d="M210 330 L150 500 Q210 520 270 500 Z" />
-          <path class="wrap wrap--left"  d="M210 330 L120 480 Q160 500 210 470 Z" />
-          <path class="wrap wrap--right" d="M210 330 L300 480 Q260 500 210 470 Z" />
-          <path class="wrap wrap--front" d="M210 330 L165 500 Q210 512 255 500 Z" />
-          <path class="tie" d="M175 355 Q210 340 245 355 L240 378 Q210 366 180 378 Z" />
+          <path class="wrap wrap--back"  d="M240 400 L175 580 Q240 606 305 580 Z" />
+          <path class="wrap wrap--left"  d="M240 400 L140 556 Q186 582 240 546 Z" />
+          <path class="wrap wrap--right" d="M240 400 L340 556 Q294 582 240 546 Z" />
+          <path class="wrap wrap--front" d="M240 400 L192 580 Q240 596 288 580 Z" />
+          <path class="tie" d="M200 428 Q240 410 280 428 L274 456 Q240 442 206 456 Z" />
         </g>
 
-        <!-- stems draw upward -->
-        <g class="stems" fill="none" stroke="#4f8557" stroke-width="4.5" stroke-linecap="round">
-          <path d="M210 340 C196 260 150 205 138 120" />
-          <path d="M210 340 C224 260 270 205 282 120" />
-          <path d="M210 340 C208 250 200 185 200 96" />
-          <path d="M210 340 C190 255 150 225 120 168" />
-          <path d="M210 340 C230 255 270 225 300 168" />
-          <path d="M210 340 C202 250 178 215 170 150" />
-          <path d="M210 340 C218 250 242 215 250 150" />
-        </g>
-
-        <!-- leaves -->
-        <g class="leaves" fill="#67a86f">
-          <ellipse class="leaf" style="--d:1.4s" cx="168" cy="250" rx="10" ry="22" transform="rotate(-32 168 250)"/>
-          <ellipse class="leaf" style="--d:1.6s" cx="255" cy="250" rx="10" ry="22" transform="rotate(32 255 250)"/>
-          <ellipse class="leaf" style="--d:1.8s" cx="150" cy="300" rx="9" ry="18" transform="rotate(-48 150 300)"/>
-          <ellipse class="leaf" style="--d:2s"   cx="275" cy="300" rx="9" ry="18" transform="rotate(48 275 300)"/>
-        </g>
-
-        <!-- blossoms: positioning group holds translate, inner group blooms -->
-        <g class="blossoms">
-          <g transform="translate(200 96)"><g class="blossom" style="--i:0"></g></g>
-          <g transform="translate(138 120)"><g class="blossom" style="--i:1"></g></g>
-          <g transform="translate(282 120)"><g class="blossom" style="--i:2"></g></g>
-          <g transform="translate(120 168)"><g class="blossom" style="--i:3"></g></g>
-          <g transform="translate(300 168)"><g class="blossom" style="--i:4"></g></g>
-          <g transform="translate(170 150)"><g class="blossom" style="--i:5"></g></g>
-          <g transform="translate(250 150)"><g class="blossom" style="--i:6"></g></g>
-        </g>
+        <g class="stems" fill="none" stroke="#4f8557" stroke-width="4.5" stroke-linecap="round"></g>
+        <g class="leaves" fill="#67a86f"></g>
+        <g class="blossoms"></g>
       </svg>
     </div>
 

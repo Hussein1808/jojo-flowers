@@ -5,35 +5,129 @@
   'use strict';
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* ---------- 1. build SVG blossoms ---------- */
-  const petalColors = [
-    ['#ef6f97', '#d94e7c'], // rose
-    ['#ffd0a8', '#ffb38a'], // peach
-    ['#ffe3ef', '#ffb0cd'], // blush
-    ['#ffffff', '#ffe08a'], // daisy/gold
-    ['#f7a8c4', '#e26aa0'],
-    ['#ff9bbd', '#e05c8c'],
-    ['#ffc8a2', '#f6a56b'],
-  ];
-  function buildBlossom(g, idx) {
-    const [c1, c2] = petalColors[idx % petalColors.length];
-    const petals = 6;
-    let inner = '';
-    for (let p = 0; p < petals; p++) {
-      const ang = (360 / petals) * p;
-      inner += `<ellipse cx="0" cy="-15" rx="10" ry="16" fill="${c1}" transform="rotate(${ang})" opacity="0.96"/>`;
+  /* ---------- 1. build the bouquet: roses, lilies, peonies ---------- */
+  const SVGNS = 'http://www.w3.org/2000/svg';
+
+  // colour sets: [petal, deep/center]
+  const PALETTES = {
+    rose:  [['#ef6f97', '#c93c68'], ['#ff8fab', '#d94e7c'], ['#ffb38a', '#e8874a'],
+            ['#f6c1d6', '#e07ba3'], ['#e24b74', '#a83057']],
+    peony: [['#ffd0de', '#ff9bbd'], ['#ffb8cf', '#f26fa0'], ['#ffc9b0', '#ff9273'],
+            ['#ffdce8', '#ff9fc6'], ['#ff9db8', '#e35e88']],
+    lily:  [['#ffffff', '#ffc2d6'], ['#fff2f7', '#ffaecb'], ['#ffe9d6', '#ffb98f'],
+            ['#f9e9ff', '#e2b6f0']],
+  };
+  const pick = (arr, i) => arr[i % arr.length];
+
+  // ---- flower renderers (centered at 0,0, scaled by s) ----
+  function rose(c1, c2, s) {
+    let out = '';
+    for (let i = 0; i < 5; i++) {           // outer petals
+      const a = 72 * i;
+      out += `<path d="M0 0 C ${-15 * s} ${-11 * s} ${-15 * s} ${-32 * s} 0 ${-36 * s} C ${15 * s} ${-32 * s} ${15 * s} ${-11 * s} 0 0 Z" fill="${c1}" transform="rotate(${a})"/>`;
     }
-    inner += `<circle r="8.5" fill="${c2}"/>`;
-    inner += `<circle r="4" fill="rgba(255,255,255,.55)"/>`;
-    g.innerHTML = inner;
+    for (let i = 0; i < 4; i++) {           // inner petals
+      const a = 90 * i + 45;
+      out += `<path d="M0 0 C ${-9 * s} ${-7 * s} ${-9 * s} ${-21 * s} 0 ${-23 * s} C ${9 * s} ${-21 * s} ${9 * s} ${-7 * s} 0 0 Z" fill="${c2}" opacity="0.9" transform="rotate(${a})"/>`;
+    }
+    out += `<circle r="${5.5 * s}" fill="${c2}"/>`;
+    out += `<path d="M0 ${-4 * s} A ${4 * s} ${4 * s} 0 1 1 ${-3.4 * s} ${2.2 * s}" fill="none" stroke="${c1}" stroke-width="${1.5 * s}" opacity="0.7"/>`;
+    return out;
   }
-  const blossoms = [...document.querySelectorAll('.blossom')];
-  blossoms.forEach((g, i) => buildBlossom(g, i));
-  blossoms.forEach((g) => g.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const r = g.getBoundingClientRect();
-    spawnBurst(r.left + r.width / 2, r.top + r.height / 2, 12);
-  }));
+  function peony(c1, c2, s) {
+    let out = '';
+    const layers = [
+      { n: 9, r: 30, rx: 13, ry: 18, col: c1, off: 0 },
+      { n: 8, r: 21, rx: 11, ry: 15, col: c1, off: 20 },
+      { n: 7, r: 12, rx: 8,  ry: 11, col: c2, off: 12 },
+    ];
+    layers.forEach((L) => {
+      for (let i = 0; i < L.n; i++) {
+        const a = (360 / L.n) * i + L.off;
+        out += `<ellipse cx="0" cy="${-L.r * 0.55 * s}" rx="${L.rx * s}" ry="${L.ry * s}" fill="${L.col}" opacity="0.97" transform="rotate(${a})"/>`;
+      }
+    });
+    out += `<circle r="${6 * s}" fill="${c2}"/>`;
+    out += `<circle r="${2.4 * s}" fill="#ffe9a8"/>`;
+    return out;
+  }
+  function lily(c1, c2, s) {
+    let out = '';
+    for (let i = 0; i < 6; i++) {           // 6 pointed petals
+      const a = 60 * i;
+      out += `<path d="M0 0 C ${-8 * s} ${-15 * s} ${-6 * s} ${-32 * s} 0 ${-38 * s} C ${6 * s} ${-32 * s} ${8 * s} ${-15 * s} 0 0 Z" fill="${c1}" transform="rotate(${a})"/>`;
+      out += `<line x1="0" y1="${-3 * s}" x2="0" y2="${-30 * s}" stroke="${c2}" stroke-width="${1.1 * s}" opacity="0.55" transform="rotate(${a})"/>`;
+    }
+    for (let i = 0; i < 6; i++) {           // stamens
+      const a = 60 * i + 12;
+      out += `<line x1="0" y1="0" x2="0" y2="${-14 * s}" stroke="#e5a93c" stroke-width="${1.5 * s}" transform="rotate(${a})"/>`;
+      out += `<circle cx="0" cy="${-14 * s}" r="${2.2 * s}" fill="#c8791f" transform="rotate(${a})"/>`;
+    }
+    out += `<circle r="${3.2 * s}" fill="#f6d98a"/>`;
+    return out;
+  }
+  const RENDER = { rose, peony, lily };
+
+  // ---- bouquet layout (viewBox 480x600, base/tie at 240,400) ----
+  const BASE = { x: 240, y: 400 };
+  const flowers = [
+    { x: 240, y: 92,  t: 'peony', s: 1.3 },
+    { x: 185, y: 120, t: 'rose',  s: 1.05 },
+    { x: 298, y: 120, t: 'rose',  s: 1.05 },
+    { x: 150, y: 158, t: 'lily',  s: 1.1 },
+    { x: 335, y: 158, t: 'lily',  s: 1.1 },
+    { x: 212, y: 150, t: 'peony', s: 1.2 },
+    { x: 270, y: 150, t: 'peony', s: 1.2 },
+    { x: 120, y: 212, t: 'rose',  s: 1.0 },
+    { x: 362, y: 212, t: 'rose',  s: 1.0 },
+    { x: 172, y: 205, t: 'lily',  s: 1.0 },
+    { x: 312, y: 205, t: 'lily',  s: 1.0 },
+    { x: 242, y: 200, t: 'rose',  s: 1.1 },
+    { x: 200, y: 250, t: 'peony', s: 1.05 },
+    { x: 284, y: 250, t: 'peony', s: 1.05 },
+  ];
+
+  const stemsG = document.querySelector('.stems');
+  const leavesG = document.querySelector('.leaves');
+  const blossomsG = document.querySelector('.blossoms');
+  const typeIdx = { rose: 0, peony: 0, lily: 0 };
+
+  flowers.forEach((f, i) => {
+    // stem from base up to the blossom
+    const c1x = BASE.x + (f.x - BASE.x) * 0.15, c1y = 348;
+    const c2x = f.x + (f.x - BASE.x) * 0.15, c2y = f.y + 72;
+    const stem = document.createElementNS(SVGNS, 'path');
+    stem.setAttribute('d', `M${BASE.x} ${BASE.y} C ${c1x} ${c1y} ${c2x} ${c2y} ${f.x} ${f.y + 16}`);
+    stem.style.animationDelay = `${0.4 + i * 0.06}s`;
+    stemsG.appendChild(stem);
+
+    // blossom: outer group positions, inner group blooms
+    const pos = document.createElementNS(SVGNS, 'g');
+    pos.setAttribute('transform', `translate(${f.x} ${f.y})`);
+    const bl = document.createElementNS(SVGNS, 'g');
+    bl.setAttribute('class', 'blossom');
+    bl.style.setProperty('--i', i);
+    const [c1, c2] = pick(PALETTES[f.t], typeIdx[f.t]++);
+    bl.innerHTML = RENDER[f.t](c1, c2, f.s);
+    bl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const r = bl.getBoundingClientRect();
+      spawnBurst(r.left + r.width / 2, r.top + r.height / 2, 14);
+    });
+    pos.appendChild(bl);
+    blossomsG.appendChild(pos);
+  });
+
+  // a few leaves around the lower edge
+  [[188, 300, -34], [292, 300, 34], [162, 342, -50], [318, 342, 50], [240, 322, 0]].forEach((L, i) => {
+    const e = document.createElementNS(SVGNS, 'ellipse');
+    e.setAttribute('class', 'leaf');
+    e.setAttribute('cx', L[0]); e.setAttribute('cy', L[1]);
+    e.setAttribute('rx', 10); e.setAttribute('ry', 22);
+    e.setAttribute('transform', `rotate(${L[2]} ${L[0]} ${L[1]})`);
+    e.style.setProperty('--d', `${1.4 + i * 0.15}s`);
+    leavesG.appendChild(e);
+  });
 
   /* ---------- 2. falling-petal canvas ---------- */
   const canvas = document.getElementById('petals');
