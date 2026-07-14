@@ -348,8 +348,8 @@
     /* update text */
     const flowerWord = n === 1 ? 'flower' : 'flowers';
     bouquetCountEl.textContent = `${n} ${flowerWord} bloomed from ${count} petals`;
-    if (n >= 14) verdictEl.textContent = 'a full bouquet — she loves you 🌸';
-    else if (n >= 10) verdictEl.textContent = 'almost full — she really loves you 🌷';
+    if (n >= 14) verdictEl.textContent = 'You always deserve flowers 🌸❤️';
+    else if (n >= 10) verdictEl.textContent = 'she really loves you 🌷';
     else if (n >= 6) verdictEl.textContent = 'growing beautifully 🌺';
     else if (n >= 1) verdictEl.textContent = 'every petal counts 🌱';
     else verdictEl.textContent = '';
@@ -375,6 +375,9 @@
   const giftBtn = document.getElementById('giftBtn');
   const finaleMsg = document.getElementById('finaleMsg');
   if (giftBtn) giftBtn.addEventListener('click', () => {
+    giftBtn.style.transition = 'opacity .4s ease';
+    giftBtn.style.opacity = '0';
+    setTimeout(() => giftBtn.style.display = 'none', 400);
     let n = 0;
     const iv = setInterval(() => {
       for (let i = 0; i < (isSmall ? 4 : 6); i++) {
@@ -384,8 +387,6 @@
       }
       if (++n > 34) clearInterval(iv);
     }, 60);
-    finaleMsg.classList.add('show');
-    giftBtn.querySelector('span').textContent = 'they\'re all yours 🌸';
   });
 
   /* ==========================================================
