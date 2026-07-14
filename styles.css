@@ -97,10 +97,14 @@ body {
   opacity: 0;
   animation: rise 1s .4s cubic-bezier(.22,1,.36,1) forwards;
 }
-.line {
-  font-size: clamp(1rem, 2.6vw, 1.4rem);
-  max-width: 30ch;
-  margin: .2rem 0 0;
+.quote {
+  font-style: italic;
+  font-size: clamp(1.2rem, 3.4vw, 1.9rem);
+  line-height: 1.35;
+  max-width: 24ch;
+  margin: .4rem 0 0;
+  color: var(--rose-deep);
+  border: none;
   opacity: 0;
   animation: rise 1s 2.8s ease forwards;
 }
