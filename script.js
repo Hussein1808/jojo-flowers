@@ -374,19 +374,42 @@
      ========================================================== */
   const giftBtn = document.getElementById('giftBtn');
   const finaleMsg = document.getElementById('finaleMsg');
+  function showerFlower() {
+    const f = document.createElement('div');
+    f.textContent = ['🌸', '🌷', '🌺', '🌻', '💐'][(Math.random() * 5) | 0];
+    const startX = Math.random() * innerWidth;
+    const dur = 2.5 + Math.random() * 2;
+    Object.assign(f.style, {
+      position: 'fixed', left: startX + 'px', top: '-50px',
+      fontSize: 20 + Math.random() * 24 + 'px',
+      pointerEvents: 'none', zIndex: 60,
+      transition: `transform ${dur}s linear, opacity ${dur}s ease-in`,
+      transform: 'translate(-50%, 0) rotate(0deg)',
+      opacity: '1',
+      filter: 'drop-shadow(0 0 12px rgba(255,107,157,0.4))'
+    });
+    document.body.appendChild(f);
+    
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        f.style.transform = `translate(-50%, ${innerHeight + 100}px) rotate(${(Math.random() - 0.5) * 500}deg)`;
+        f.style.opacity = Math.random() > 0.7 ? '0' : '1';
+      });
+    });
+    setTimeout(() => f.remove(), dur * 1000);
+  }
+
   if (giftBtn) giftBtn.addEventListener('click', () => {
     giftBtn.style.transition = 'opacity .4s ease';
     giftBtn.style.opacity = '0';
     setTimeout(() => giftBtn.style.display = 'none', 400);
     let n = 0;
     const iv = setInterval(() => {
-      for (let i = 0; i < (isSmall ? 4 : 6); i++) {
-        const p = makeAmbient(Math.random() * innerWidth, -20);
-        p.vy = 1.5 + Math.random() * 2;
-        ambientPetals.push(p);
+      for (let i = 0; i < (isSmall ? 2 : 4); i++) {
+        showerFlower();
       }
-      if (++n > 34) clearInterval(iv);
-    }, 60);
+      if (++n > 60) clearInterval(iv);
+    }, 70);
   });
 
   /* ==========================================================
