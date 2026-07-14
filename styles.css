@@ -271,7 +271,7 @@ body {
 /* ============================================================
    FINALE
    ============================================================ */
-.finale-section { min-height: 70svh; }
+.finale-section { min-height: 30svh; margin-top: -15svh; }
 .gift-btn {
   margin-top: 1.4rem;
   display: inline-flex; align-items: center; gap: .6rem;
